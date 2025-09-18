@@ -2,95 +2,166 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Coding Microlearning App Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base colors - Modern dark theme */
+    --background: 220 13% 9%;
+    --foreground: 220 9% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Card and surface colors */
+    --card: 220 13% 11%;
+    --card-foreground: 220 9% 95%;
+    
+    --surface: 220 13% 13%;
+    --surface-foreground: 220 9% 90%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Interactive colors */
+    --primary: 262 83% 58%;
+    --primary-foreground: 220 13% 9%;
+    --primary-hover: 262 83% 65%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 220 9% 90%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Language-specific accent colors */
+    --python: 55 100% 50%;
+    --javascript: 53 93% 54%;
+    --java: 14 91% 55%;
+    --cpp: 210 100% 56%;
+    --react: 193 95% 68%;
+    --typescript: 211 60% 45%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Gamification colors */
+    --xp: 142 76% 36%;
+    --streak: 25 95% 53%;
+    --achievement: 262 83% 58%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Status colors */
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --destructive: 0 84% 60%;
+    --info: 217 91% 60%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* UI elements */
+    --muted: 220 13% 15%;
+    --muted-foreground: 220 9% 60%;
+    
+    --accent: 220 13% 18%;
+    --accent-foreground: 220 9% 90%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 13% 20%;
+    --input: 220 13% 15%;
+    --ring: 262 83% 58%;
 
-    --radius: 0.5rem;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(262 83% 58%), hsl(262 83% 65%));
+    --gradient-surface: linear-gradient(180deg, hsl(220 13% 11%), hsl(220 13% 13%));
+    --gradient-accent: linear-gradient(135deg, hsl(262 83% 58%), hsl(193 95% 68%));
 
-    --sidebar-background: 0 0% 98%;
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(220 13% 9% / 0.5);
+    --shadow-md: 0 4px 6px -1px hsl(220 13% 9% / 0.5);
+    --shadow-lg: 0 10px 15px -3px hsl(220 13% 9% / 0.5);
+    --shadow-glow: 0 0 20px hsl(262 83% 58% / 0.3);
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --radius: 0.75rem;
+  }
+}
 
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+@layer base {
+  * {
+    @apply border-border;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--accent));
+    border-radius: 3px;
+  }
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+  }
+}
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+@layer components {
+  /* Feed animations */
+  .feed-item {
+    @apply transform transition-all duration-300 ease-out;
+  }
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+  .feed-item:hover {
+    @apply scale-[1.02] shadow-lg;
+  }
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+  /* Language category styling */
+  .category-python { @apply bg-[hsl(var(--python))] text-black; }
+  .category-javascript { @apply bg-[hsl(var(--javascript))] text-black; }
+  .category-java { @apply bg-[hsl(var(--java))] text-black; }
+  .category-cpp { @apply bg-[hsl(var(--cpp))] text-white; }
+  .category-react { @apply bg-[hsl(var(--react))] text-black; }
+  .category-typescript { @apply bg-[hsl(var(--typescript))] text-white; }
+
+  /* Gamification elements */
+  .xp-glow {
+    @apply text-[hsl(var(--xp))];
+    filter: drop-shadow(0 0 8px hsl(var(--xp) / 0.5));
+  }
+
+  .streak-glow {
+    @apply text-[hsl(var(--streak))];
+    filter: drop-shadow(0 0 8px hsl(var(--streak) / 0.5));
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-[hsl(var(--card))] backdrop-blur-xl border border-[hsl(var(--border))];
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    @apply animate-pulse bg-gradient-to-r from-[hsl(var(--muted))] via-[hsl(var(--accent))] to-[hsl(var(--muted))] bg-[length:200%_100%];
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Mode toggle animations */
+  .mode-toggle {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+
+  .mode-toggle::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full;
+    transition: transform 0.6s;
+  }
+
+  .mode-toggle:hover::before {
+    @apply translate-x-full;
   }
 }
 
