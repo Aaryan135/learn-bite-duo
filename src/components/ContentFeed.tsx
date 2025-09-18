@@ -1,6 +1,7 @@
 import { useState } from "react";
 import VideoCard from "./VideoCard";
 import TextSnippetCard from "./TextSnippetCard";
+import ContentGenerator from "./ContentGenerator";
 
 interface ContentItem {
   id: string;
@@ -120,11 +121,12 @@ ptr->doSomething();`,
 ];
 
 const ContentFeed = ({ mode, selectedCategory }: ContentFeedProps) => {
+  const [content, setContent] = useState<ContentItem[]>(mockContent);
   const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(
     new Set(mockContent.filter(item => item.isBookmarked).map(item => item.id))
   );
 
-  const filteredContent = mockContent.filter(item => {
+  const filteredContent = content.filter(item => {
     if (selectedCategory !== 'all' && item.category !== selectedCategory) {
       return false;
     }
@@ -153,9 +155,31 @@ const ContentFeed = ({ mode, selectedCategory }: ContentFeedProps) => {
     });
   };
 
+  const handleContentGenerated = (newContent: any) => {
+    const formattedContent: ContentItem = {
+      id: newContent.id,
+      type: newContent.type,
+      title: newContent.title,
+      category: newContent.category,
+      difficulty: newContent.difficulty,
+      likes: newContent.likes,
+      isBookmarked: newContent.isBookmarked,
+      thumbnail: newContent.thumbnail,
+      duration: newContent.duration,
+      preview: newContent.preview || newContent.explanation || newContent.code_example,
+      readTime: newContent.readTime || newContent.estimated_read_time,
+    };
+    
+    setContent(prev => [formattedContent, ...prev]);
+  };
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
-      <div className="space-y-6">
+    <div className="max-w-2xl mx-auto py-6">
+      <ContentGenerator 
+        mode={mode} 
+        onContentGenerated={handleContentGenerated}
+      />
+      <div className="px-4 space-y-6">
         {filteredContent.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-muted-foreground text-lg mb-2">
