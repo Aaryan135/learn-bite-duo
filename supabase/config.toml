@@ -2,3 +2,6 @@ project_id = "mmwtiqhowrconndntekz"
 
 [functions.generate-content]
 verify_jwt = false
+
+[functions.check-content-levels]
+verify_jwt = false

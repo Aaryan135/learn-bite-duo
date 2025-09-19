@@ -14,7 +14,185 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_content_pool: {
+        Row: {
+          code_examples: Json | null
+          content: string
+          content_type: string
+          created_by_ai_at: string | null
+          difficulty_level: string
+          estimated_duration: number | null
+          id: string
+          is_active: boolean | null
+          subject: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          used_count: number | null
+        }
+        Insert: {
+          code_examples?: Json | null
+          content: string
+          content_type: string
+          created_by_ai_at?: string | null
+          difficulty_level: string
+          estimated_duration?: number | null
+          id?: string
+          is_active?: boolean | null
+          subject: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          used_count?: number | null
+        }
+        Update: {
+          code_examples?: Json | null
+          content?: string
+          content_type?: string
+          created_by_ai_at?: string | null
+          difficulty_level?: string
+          estimated_duration?: number | null
+          id?: string
+          is_active?: boolean | null
+          subject?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          used_count?: number | null
+        }
+        Relationships: []
+      }
+      content_generation: {
+        Row: {
+          content_type: string
+          created_at: string | null
+          difficulty_level: string
+          generated_count: number | null
+          id: string
+          last_generated_at: string | null
+          next_generation_threshold: number | null
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          content_type: string
+          created_at?: string | null
+          difficulty_level: string
+          generated_count?: number | null
+          id?: string
+          last_generated_at?: string | null
+          next_generation_threshold?: number | null
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          content_type?: string
+          created_at?: string | null
+          difficulty_level?: string
+          generated_count?: number | null
+          id?: string
+          last_generated_at?: string | null
+          next_generation_threshold?: number | null
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_generation_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          preferred_difficulty: string | null
+          preferred_subjects: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          preferred_difficulty?: string | null
+          preferred_subjects?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          preferred_difficulty?: string | null
+          preferred_subjects?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_content_consumption: {
+        Row: {
+          bookmarked: boolean | null
+          completion_percentage: number | null
+          consumed_at: string | null
+          content_id: string
+          difficulty_level: string
+          id: string
+          liked: boolean | null
+          shared: boolean | null
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          bookmarked?: boolean | null
+          completion_percentage?: number | null
+          consumed_at?: string | null
+          content_id: string
+          difficulty_level: string
+          id?: string
+          liked?: boolean | null
+          shared?: boolean | null
+          subject: string
+          user_id: string
+        }
+        Update: {
+          bookmarked?: boolean | null
+          completion_percentage?: number | null
+          consumed_at?: string | null
+          content_id?: string
+          difficulty_level?: string
+          id?: string
+          liked?: boolean | null
+          shared?: boolean | null
+          subject?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_content_consumption_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "ai_content_pool"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_content_consumption_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
