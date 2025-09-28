@@ -194,8 +194,8 @@ export const useContentStore = create<ContentState>((set, get) => ({
           await triggerContentGeneration();
           // Poll for new content up to 10 seconds
           let attempts = 0;
-          let loaded = false;
-          while (attempts < 10 && !loaded) {
+          let lastPollData = data;
+          while (attempts < 10) {
             await new Promise(res => setTimeout(res, 1000));
             let pollQuery = supabase
               .from('ai_content_pool')
@@ -215,15 +215,12 @@ export const useContentStore = create<ContentState>((set, get) => ({
               console.error('Error polling for new content:', pollError);
               break;
             }
-            if (pollData && pollData.length >= 10) {
+            if (pollData && pollData.length > (lastPollData?.length || 0)) {
               set({ content: pollData as ContentItem[] || [], currentIndex: 0 });
-              loaded = true;
               break;
             }
+            lastPollData = pollData;
             attempts++;
-          }
-          if (!loaded) {
-            console.warn('Content generation did not complete in time. Showing what is available.');
           }
         }
       }
