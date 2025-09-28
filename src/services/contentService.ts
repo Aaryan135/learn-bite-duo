@@ -121,7 +121,7 @@ export class ContentService {
     }
 
     // Increment usage count using RPC
-    await supabase.rpc('increment_content_usage', { content_id: contentId });
+  await (supabase as any).rpc('increment_content_usage', { content_id: contentId });
   }
 
   /**

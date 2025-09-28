@@ -30,23 +30,32 @@ export interface UserConsumption {
   shared: boolean;
 }
 
+
 interface ContentState {
   content: ContentItem[];
   currentIndex: number;
   loading: boolean;
-  selectedSubject: string;
-  selectedDifficulty: 'beginner' | 'intermediate' | 'advanced';
+  loadingMore: boolean;
+  selectedSubject: string | 'all';
+  selectedDifficulty: 'beginner' | 'intermediate' | 'advanced' | 'all';
   mode: 'video_script' | 'text_snippet';
   userConsumption: UserConsumption[];
-  
+
+  // Selectors
+  getSavedContent: () => ContentItem[];
+
   // Actions
   setContent: (content: ContentItem[]) => void;
   setCurrentIndex: (index: number) => void;
   setLoading: (loading: boolean) => void;
-  setSelectedSubject: (subject: string) => void;
-  setSelectedDifficulty: (difficulty: 'beginner' | 'intermediate' | 'advanced') => void;
+  setSelectedSubject: (subject: string | 'all') => void;
+  setSelectedDifficulty: (difficulty: 'beginner' | 'intermediate' | 'advanced' | 'all') => void;
   setMode: (mode: 'video_script' | 'text_snippet') => void;
   loadContent: () => Promise<void>;
+  loadInitialContent: () => Promise<void>;
+  loadMoreContent: () => Promise<void>;
+  triggerBackgroundGeneration: () => void;
+  triggerContentGeneration: () => void;
   markContentConsumed: (contentId: string, completionPercentage: number) => Promise<void>;
   updateContentInteraction: (contentId: string, type: 'liked' | 'bookmarked' | 'shared', value: boolean) => Promise<void>;
   checkAndTriggerGeneration: () => Promise<void>;
@@ -56,10 +65,95 @@ export const useContentStore = create<ContentState>((set, get) => ({
   content: [],
   currentIndex: 0,
   loading: false,
-  selectedSubject: 'javascript',
-  selectedDifficulty: 'beginner',
+  loadingMore: false,
+  selectedSubject: 'all',
+  selectedDifficulty: 'all',
   mode: 'video_script',
   userConsumption: [],
+  loadMoreContent: async () => {
+    const { selectedSubject, selectedDifficulty, mode, content } = get();
+    set({ loadingMore: true });
+    try {
+      let query = supabase
+        .from('ai_content_pool')
+        .select('*')
+        .eq('content_type', mode)
+        .eq('is_active', true)
+        .order('created_by_ai_at', { ascending: false })
+        .range(content.length, content.length + 19);
+
+      if (selectedSubject && selectedSubject !== 'all') {
+        query = query.eq('subject', selectedSubject.toLowerCase());
+      }
+      if (selectedDifficulty && selectedDifficulty !== 'all') {
+        query = query.eq('difficulty_level', selectedDifficulty);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error('Error loading more content:', error);
+        return;
+      }
+      if (data && data.length > 0) {
+        set({ content: [...content, ...data] });
+      }
+    } catch (error) {
+      console.error('Error in loadMoreContent:', error);
+    } finally {
+      set({ loadingMore: false });
+    }
+  },
+
+
+  triggerBackgroundGeneration: async () => {
+    // Generate content for all subjects (hardcoded list for now)
+    const subjects = ['javascript', 'react', 'python', 'typescript'];
+    const { selectedDifficulty, mode } = get();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    for (const subject of subjects) {
+      const { data, error } = await supabase.functions.invoke('generate-content', {
+        body: {
+          subject,
+          difficulty: selectedDifficulty === 'all' ? 'beginner' : selectedDifficulty,
+          contentType: mode,
+          count: 5
+        }
+      });
+      if (error) {
+        console.error(`Error generating content for subject ${subject}:`, error);
+      } else {
+        console.log(`Content generation result for ${subject}:`, data);
+      }
+    }
+  },
+
+  triggerContentGeneration: async () => {
+    // Generate content for the selected subject
+    const { selectedSubject, selectedDifficulty, mode } = get();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !selectedSubject || selectedSubject === 'all') return;
+    const { data, error } = await supabase.functions.invoke('generate-content', {
+      body: {
+        subject: selectedSubject,
+        difficulty: selectedDifficulty === 'all' ? 'beginner' : selectedDifficulty,
+        contentType: mode,
+        count: 5
+      }
+    });
+    if (error) {
+      console.error(`Error generating content for subject ${selectedSubject}:`, error);
+    } else {
+      console.log(`Content generation result for ${selectedSubject}:`, data);
+    }
+  },
+
+  getSavedContent: () => {
+    const { content, userConsumption } = get();
+    // Find all content items where userConsumption has bookmarked true
+    const bookmarkedIds = userConsumption.filter(uc => uc.bookmarked).map(uc => uc.content_id);
+    return content.filter(item => bookmarkedIds.includes(item.id));
+  },
 
   setContent: (content) => set({ content }),
   setCurrentIndex: (currentIndex) => set({ currentIndex }),
@@ -69,31 +163,80 @@ export const useContentStore = create<ContentState>((set, get) => ({
   setMode: (mode) => set({ mode }),
 
   loadContent: async () => {
-    const { selectedSubject, selectedDifficulty, mode } = get();
+    const { selectedSubject, selectedDifficulty, mode, triggerContentGeneration } = get();
     set({ loading: true });
-    
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('ai_content_pool')
         .select('*')
-        .eq('subject', selectedSubject.toLowerCase())
-        .eq('difficulty_level', selectedDifficulty)
         .eq('content_type', mode)
         .eq('is_active', true)
         .order('created_by_ai_at', { ascending: false })
         .limit(20);
 
+      if (selectedSubject && selectedSubject !== 'all') {
+        query = query.eq('subject', selectedSubject.toLowerCase());
+      }
+      if (selectedDifficulty && selectedDifficulty !== 'all') {
+        query = query.eq('difficulty_level', selectedDifficulty);
+      }
+
+      const { data, error } = await query;
       if (error) {
         console.error('Error loading content:', error);
         return;
       }
-
       set({ content: data as ContentItem[] || [], currentIndex: 0 });
+
+      // If less than 10 reels, trigger content generation and poll for new content
+      if (!data || data.length < 10) {
+        if (typeof triggerContentGeneration === 'function') {
+          await triggerContentGeneration();
+          // Poll for new content up to 10 seconds
+          let attempts = 0;
+          let loaded = false;
+          while (attempts < 10 && !loaded) {
+            await new Promise(res => setTimeout(res, 1000));
+            let pollQuery = supabase
+              .from('ai_content_pool')
+              .select('*')
+              .eq('content_type', mode)
+              .eq('is_active', true)
+              .order('created_by_ai_at', { ascending: false })
+              .limit(20);
+            if (selectedSubject && selectedSubject !== 'all') {
+              pollQuery = pollQuery.eq('subject', selectedSubject.toLowerCase());
+            }
+            if (selectedDifficulty && selectedDifficulty !== 'all') {
+              pollQuery = pollQuery.eq('difficulty_level', selectedDifficulty);
+            }
+            const { data: pollData, error: pollError } = await pollQuery;
+            if (pollError) {
+              console.error('Error polling for new content:', pollError);
+              break;
+            }
+            if (pollData && pollData.length >= 10) {
+              set({ content: pollData as ContentItem[] || [], currentIndex: 0 });
+              loaded = true;
+              break;
+            }
+            attempts++;
+          }
+          if (!loaded) {
+            console.warn('Content generation did not complete in time. Showing what is available.');
+          }
+        }
+      }
     } catch (error) {
       console.error('Error in loadContent:', error);
     } finally {
       set({ loading: false });
     }
+  },
+
+    loadInitialContent: async () => {
+      // Alias for loadContent for compatibility
+      return get().loadContent();
   },
 
   markContentConsumed: async (contentId: string, completionPercentage: number) => {
@@ -104,25 +247,31 @@ export const useContentStore = create<ContentState>((set, get) => ({
       if (!user) return;
 
       // Check if already consumed
-      const { data: existing } = await supabase
+      const { data: existing, error: selectError } = await supabase
         .from('user_content_consumption')
         .select('*')
         .eq('user_id', user.id)
         .eq('content_id', contentId)
-        .single();
+        .maybeSingle();
+      if (selectError) {
+        console.error('Error selecting user_content_consumption:', selectError);
+      }
 
       if (existing) {
         // Update existing record
-        await supabase
+        const { error: updateError } = await supabase
           .from('user_content_consumption')
           .update({ 
             completion_percentage: Math.max(existing.completion_percentage, completionPercentage),
             consumed_at: new Date().toISOString()
           })
           .eq('id', existing.id);
+        if (updateError) {
+          console.error('Error updating user_content_consumption:', updateError);
+        }
       } else {
         // Insert new consumption record
-        await supabase
+        const { error: insertError } = await supabase
           .from('user_content_consumption')
           .insert({
             user_id: user.id,
@@ -131,11 +280,16 @@ export const useContentStore = create<ContentState>((set, get) => ({
             difficulty_level: selectedDifficulty,
             completion_percentage: completionPercentage
           });
+        if (insertError) {
+          console.error('Error inserting user_content_consumption:', insertError);
+        }
       }
 
       // Update content usage count using RPC
-      await supabase.rpc('increment_content_usage', { content_id: contentId });
-
+      const { error: rpcError } = await (supabase as any).rpc('increment_content_usage', { content_id: contentId });
+      if (rpcError) {
+        console.error('Error calling increment_content_usage RPC:', rpcError);
+      }
     } catch (error) {
       console.error('Error marking content consumed:', error);
     }
@@ -146,18 +300,24 @@ export const useContentStore = create<ContentState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: existing } = await supabase
+      const { data: existing, error: selectError } = await supabase
         .from('user_content_consumption')
         .select('*')
         .eq('user_id', user.id)
         .eq('content_id', contentId)
-        .single();
+        .maybeSingle();
+      if (selectError) {
+        console.error('Error selecting user_content_consumption:', selectError);
+      }
 
       if (existing) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('user_content_consumption')
           .update({ [type]: value })
           .eq('id', existing.id);
+        if (updateError) {
+          console.error('Error updating user_content_consumption:', updateError);
+        }
       }
     } catch (error) {
       console.error('Error updating content interaction:', error);

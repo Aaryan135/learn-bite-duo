@@ -1,0 +1,41 @@
+:root {
+  --color-primary: #2563eb;
+  --color-on-primary: #fff;
+  --color-surface: #f8fafc;
+  --color-on-surface: #1e293b;
+  --color-surface-variant: #e2e8f0;
+  --color-outline: #cbd5e1;
+  --color-glass-bg: rgba(255,255,255,0.7);
+  --color-glass-border: rgba(255,255,255,0.3);
+  --spacing-1: 8px;
+  --spacing-2: 16px;
+  --spacing-3: 24px;
+  --spacing-4: 32px;
+  --radius-1: 8px;
+  --radius-2: 16px;
+  --shadow-elevate: 0 4px 24px 0 rgba(30,41,59,0.08);
+  --font-title: clamp(1.5rem, 2vw, 2.25rem);
+  --font-body: 1rem;
+  --font-label: 0.9375rem;
+  --font-caption: 0.8125rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #60a5fa;
+    --color-on-primary: #1e293b;
+    --color-surface: #1e293b;
+    --color-on-surface: #f8fafc;
+    --color-surface-variant: #334155;
+    --color-outline: #475569;
+    --color-glass-bg: rgba(30,41,59,0.7);
+    --color-glass-border: rgba(30,41,59,0.3);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .transition-all,
+  .transition-shadow,
+  .transition-opacity {
+    transition-duration: 0.01ms !important;
+    transition-property: opacity !important;
+  }
+}

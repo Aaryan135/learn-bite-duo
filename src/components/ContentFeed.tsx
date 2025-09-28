@@ -1,230 +1,159 @@
-import { useState } from "react";
-import VideoCard from "./VideoCard";
-import TextSnippetCard from "./TextSnippetCard";
-import ContentGenerator from "./ContentGenerator";
+import { useEffect } from 'react';
+import { useContentStore } from '@/store/contentStore';
+import { useAuth } from '@/hooks/useAuth';
+import { ContentCard } from './ContentCard';
+import { DebugPanel } from './DebugPanel';
+import { Button } from '@/components/ui/button';
 
-interface ContentItem {
-  id: string;
-  type: 'video' | 'text';
-  title: string;
-  category: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  likes: number;
-  isBookmarked: boolean;
-  // Video specific
-  thumbnail?: string;
-  duration?: number;
-  // Text specific
-  preview?: string;
-  readTime?: number;
-}
+export function ContentFeed() {
+  const { triggerContentGeneration } = useContentStore();
+  const {
+    content,
+    currentIndex,
+    loading,
+    loadingMore,
+    setCurrentIndex,
+    loadInitialContent,
+    loadMoreContent,
+    triggerBackgroundGeneration
+  } = useContentStore();
+  
+  const { user, loading: authLoading, signInAnonymously } = useAuth();
+  const { selectedSubject, selectedDifficulty } = useContentStore();
 
-interface ContentFeedProps {
-  mode: 'video' | 'text';
-  selectedCategory: string;
-}
-
-// Mock data - will be replaced with real data from backend
-const mockContent: ContentItem[] = [
-  {
-    id: '1',
-    type: 'video',
-    title: 'Python List Comprehensions in 60 Seconds',
-    category: 'python',
-    difficulty: 'beginner',
-    likes: 234,
-    isBookmarked: false,
-    thumbnail: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=225&fit=crop',
-    duration: 75,
-  },
-  {
-    id: '2',
-    type: 'text',
-    title: 'Understanding JavaScript Closures',
-    category: 'javascript',
-    difficulty: 'intermediate',
-    likes: 189,
-    isBookmarked: true,
-    preview: `function outerFunction(x) {
-  return function innerFunction(y) {
-    return x + y;
-  };
-}
-
-const closure = outerFunction(10);
-console.log(closure(5)); // 15`,
-    readTime: 3,
-  },
-  {
-    id: '3',
-    type: 'video',
-    title: 'React Hooks: useState Deep Dive',
-    category: 'react',
-    difficulty: 'intermediate',
-    likes: 456,
-    isBookmarked: false,
-    thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400&h=225&fit=crop',
-    duration: 85,
-  },
-  {
-    id: '4',
-    type: 'text',
-    title: 'TypeScript Generics Made Simple',
-    category: 'typescript',
-    difficulty: 'advanced',
-    likes: 312,
-    isBookmarked: false,
-    preview: `function identity<T>(arg: T): T {
-  return arg;
-}
-
-// Usage
-let output = identity<string>("Hello");
-let numOutput = identity<number>(42);
-
-// Type inference
-let autoOutput = identity("World");`,
-    readTime: 4,
-  },
-  {
-    id: '5',
-    type: 'video',
-    title: 'Java OOP Concepts Explained',
-    category: 'java',
-    difficulty: 'beginner',
-    likes: 178,
-    isBookmarked: true,
-    thumbnail: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=400&h=225&fit=crop',
-    duration: 90,
-  },
-  {
-    id: '6',
-    type: 'text',
-    title: 'C++ Smart Pointers Guide',
-    category: 'cpp',
-    difficulty: 'advanced',
-    likes: 267,
-    isBookmarked: false,
-    preview: `#include <memory>
-
-class MyClass {
-public:
-    void doSomething() {
-        std::cout << "Doing something..." << std::endl;
+  // Load initial content when user is available
+  useEffect(() => {
+    if (user) {
+      loadInitialContent();
     }
-};
+  }, [user, selectedSubject, selectedDifficulty]);
 
-auto ptr = std::make_unique<MyClass>();
-ptr->doSomething();`,
-    readTime: 5,
-  },
-];
-
-const ContentFeed = ({ mode, selectedCategory }: ContentFeedProps) => {
-  const [content, setContent] = useState<ContentItem[]>(mockContent);
-  const [bookmarkedItems, setBookmarkedItems] = useState<Set<string>>(
-    new Set(mockContent.filter(item => item.isBookmarked).map(item => item.id))
-  );
-
-  const filteredContent = content.filter(item => {
-    if (selectedCategory !== 'all' && item.category !== selectedCategory) {
-      return false;
+  // Track when user scrolls through content
+  useEffect(() => {
+    if (currentIndex > 0 && currentIndex % 5 === 0) {
+      // User has viewed 5 more pieces, trigger background check
+      triggerBackgroundGeneration();
     }
-    return item.type === mode;
-  });
+  }, [currentIndex]);
 
-  const handlePlay = (id: string) => {
-    console.log('Playing video:', id);
-    // TODO: Implement video playback
+  // Auto-generate new content if only 5 reels are left
+  useEffect(() => {
+    if (
+      content.length > 0 &&
+      currentIndex >= content.length - 5 &&
+      typeof triggerContentGeneration === 'function' &&
+      selectedSubject && selectedSubject !== 'all'
+    ) {
+      triggerContentGeneration();
+    }
+  }, [currentIndex, content.length, selectedSubject]);
+
+  const handleNext = () => {
+    if (currentIndex < content.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      // At the end, try to load more content
+      loadMoreContent();
+    }
   };
 
-  const handleRead = (id: string) => {
-    console.log('Reading article:', id);  
-    // TODO: Navigate to full article
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
   };
 
-  const handleBookmark = (id: string) => {
-    setBookmarkedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
+  // Show auth loading
+  if (authLoading) {
+    return (
+      <div className="h-screen w-full bg-black flex items-center justify-center">
+        <div className="text-white text-lg">Initializing...</div>
+      </div>
+    );
+  }
 
-  const handleContentGenerated = (newContent: any) => {
-    const formattedContent: ContentItem = {
-      id: newContent.id,
-      type: newContent.type,
-      title: newContent.title,
-      category: newContent.category,
-      difficulty: newContent.difficulty,
-      likes: newContent.likes,
-      isBookmarked: newContent.isBookmarked,
-      thumbnail: newContent.thumbnail,
-      duration: newContent.duration,
-      preview: newContent.preview || newContent.explanation || newContent.code_example,
-      readTime: newContent.readTime || newContent.estimated_read_time,
-    };
-    
-    setContent(prev => [formattedContent, ...prev]);
-  };
+  // Show sign in if no user
+  if (!user) {
+    return (
+      <div className="h-screen w-full bg-black flex items-center justify-center">
+        <div className="text-center text-white space-y-4">
+          <h2 className="text-2xl font-bold">Welcome to CodeSnap</h2>
+          <p className="text-white/70">Start learning with bite-sized coding content</p>
+          <Button onClick={signInAnonymously} className="bg-white text-black hover:bg-white/90">
+            Start Learning
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show content loading
+  if (loading && content.length === 0) {
+    return (
+      <div className="h-screen w-full bg-black flex items-center justify-center">
+        <div className="text-white text-lg">Loading fresh content...</div>
+      </div>
+    );
+  }
+
+  // Show empty state
+  if (!loading && content.length === 0) {
+    return (
+      <div className="h-screen w-full bg-black flex items-center justify-center">
+        <div className="text-center text-white space-y-4">
+          <h2 className="text-xl font-bold">No content available</h2>
+          <p className="text-white/70">Let's generate some fresh content for you!</p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={loadInitialContent} variant="outline">
+              Refresh
+            </Button>
+            <Button 
+              onClick={() => {
+                const { triggerContentGeneration } = useContentStore.getState();
+                triggerContentGeneration();
+              }} 
+              className="bg-white text-black hover:bg-white/90"
+            >
+              Generate Content
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
-      <ContentGenerator 
-        mode={mode} 
-        onContentGenerated={handleContentGenerated}
-      />
-      <div className="px-4 space-y-6">
-        {filteredContent.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-muted-foreground text-lg mb-2">
-              No {mode === 'video' ? 'videos' : 'articles'} found
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Try selecting a different category or check back later for new content.
-            </p>
+    <div className="fixed inset-0 w-full h-full bg-black flex flex-col overflow-hidden">
+      <div className="flex-1 w-full h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide">
+        {content.map((item, index) => (
+          <div
+            key={item.id}
+            className="snap-start w-full h-full flex items-stretch"
+          >
+            <ContentCard
+              content={item}
+              isActive={currentIndex === index}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            />
           </div>
-        ) : (
-          filteredContent.map((item) => (
-            mode === 'video' ? (
-              <VideoCard
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                thumbnail={item.thumbnail || ''}
-                duration={item.duration || 0}
-                category={item.category}
-                difficulty={item.difficulty}
-                likes={item.likes}
-                isBookmarked={bookmarkedItems.has(item.id)}
-                onPlay={handlePlay}
-                onBookmark={handleBookmark}
-              />
-            ) : (
-              <TextSnippetCard
-                key={item.id}
-                id={item.id}
-                title={item.title}
-                preview={item.preview || ''}
-                category={item.category}
-                difficulty={item.difficulty}
-                readTime={item.readTime || 0}
-                likes={item.likes}
-                isBookmarked={bookmarkedItems.has(item.id)}
-                onRead={handleRead}
-                onBookmark={handleBookmark}
-              />
-            )
-          ))
+        ))}
+        {/* Loading indicator for more content */}
+        {loadingMore && (
+          <div className="snap-start w-full h-full flex items-center justify-center bg-black">
+            <div className="text-white text-base sm:text-lg">Loading more content...</div>
+          </div>
         )}
       </div>
+
+      {loading && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="text-white">Loading more content...</div>
+        </div>
+      )}
+
+      {/* Debug Panel */}
+      <DebugPanel />
     </div>
   );
-};
-
-export default ContentFeed;
+}

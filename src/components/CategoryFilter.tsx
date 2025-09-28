@@ -36,8 +36,9 @@ const CategoryFilter = ({ selectedCategory, onCategoryChange }: Omit<CategoryFil
                 cursor-pointer px-4 py-2 rounded-full whitespace-nowrap transition-all duration-300
                 ${selectedCategory === category.id 
                   ? `category-${category.color} shadow-glow border-transparent` 
-                  : 'bg-surface border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/50'
+                  : 'bg-surface border-border/50 hover:text-foreground hover:border-primary/50'
                 }
+                text-white !important
               `}
               onClick={() => onCategoryChange(category.id)}
             >

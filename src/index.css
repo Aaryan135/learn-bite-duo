@@ -1,9 +1,121 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+/* High-contrast category badges for dark mode */
+[data-theme="dark"] .category-python { background-color: #ffe066 !important; color: #222 !important; }
+[data-theme="dark"] .category-javascript { background-color: #fff475 !important; color: #222 !important; }
+[data-theme="dark"] .category-java { background-color: #ffb4a2 !important; color: #222 !important; }
+[data-theme="dark"] .category-cpp { background-color: #a2d2ff !important; color: #222 !important; }
+[data-theme="dark"] .category-react { background-color: #80cfff !important; color: #222 !important; }
+[data-theme="dark"] .category-typescript { background-color: #b5d0ff !important; color: #222 !important; }
+
+
 @tailwind base;
 @tailwind components;
+
+.fit-screen {
+  width: 100vw;
+  min-height: 100vh;
+  max-width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+@layer utilities {
+  .bg-cs-bg {
+    background-color: hsl(var(--bg));
+  }
+  .text-cs-on-bg {
+    color: hsl(var(--on-bg));
+  }
+}
+
 @tailwind utilities;
 
-/* Coding Microlearning App Design System */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Safe area utilities for mobile devices */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .mr-safe {
+    margin-right: env(safe-area-inset-right);
+  }
+
+
+
+
+
+  /* Blur Utilities for Glassmorphism */
+  .blur-glass-sm { backdrop-filter: blur(10px); }
+  .blur-glass-md { backdrop-filter: blur(20px); }
+  .blur-glass-lg { backdrop-filter: blur(30px); }
+  .blur-glass-xl { backdrop-filter: blur(40px); }
+}
+
+/* Custom styles for CodeSnap */
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Smooth scrolling for content feed */
+.snap-y {
+  scroll-snap-type: y mandatory;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* Custom select styles for dark theme */
+select option {
+  background-color: #1a1a1a;
+  color: white;
+}
 
 @layer base {
   :root {
@@ -67,17 +179,31 @@
     --shadow-lg: 0 10px 15px -3px hsl(220 13% 9% / 0.5);
     --shadow-glow: 0 0 20px hsl(262 83% 58% / 0.3);
 
+
+    
+
+    
+
+    
+
+    
+
+    
+    /* Animation Timing */
+    --spring-duration: 0.4s;
+    --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --micro-duration: 0.15s;
+    --micro-easing: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
     --radius: 0.75rem;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-cs-bg text-cs-on-bg font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
   }
 
@@ -209,14 +335,110 @@
   .category-cpp {
     @apply bg-red-500/20 text-red-400 border border-red-400/30;
   }
+
+
+
+  /* Claymorphic Components */
+  .clay-button {
+    background: var(--clay-primary);
+    box-shadow: var(--shadow-clay-raised);
+    border-radius: 12px;
+    transition: all var(--micro-duration) var(--micro-easing);
+  }
+
+  .clay-button:hover {
+    box-shadow: var(--shadow-clay-floating);
+    transform: translateY(-1px);
+  }
+
+  .clay-button:active {
+    background: var(--clay-primary-pressed);
+    box-shadow: var(--shadow-clay-pressed);
+    transform: translateY(2px);
+  }
+
+  .clay-button-secondary {
+    background: var(--clay-secondary);
+    box-shadow: var(--shadow-clay-raised);
+    border-radius: 12px;
+    transition: all var(--micro-duration) var(--micro-easing);
+  }
+
+  .clay-button-secondary:active {
+    background: var(--clay-secondary-pressed);
+    box-shadow: var(--shadow-clay-pressed);
+    transform: translateY(2px);
+  }
+
+  .clay-button-accent {
+    background: var(--clay-accent);
+    box-shadow: var(--shadow-clay-raised);
+    border-radius: 12px;
+    transition: all var(--micro-duration) var(--micro-easing);
+  }
+
+  .clay-button-accent:active {
+    background: var(--clay-accent-pressed);
+    box-shadow: var(--shadow-clay-pressed);
+    transform: translateY(2px);
+  }
+
+
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .perspective-1500 {
+    perspective: 1500px;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
+  /* 3D Text Effects */
+
+
+  .text-clay-embossed {
+    color: white;
+    text-shadow: 
+      0 1px 0 rgba(0, 0, 0, 0.3),
+      0 -1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+
+
+  .animate-clay-press {
+    animation: clay-press var(--micro-duration) var(--micro-easing);
+  }
+
+  .animate-glass-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .animate-glass-shimmer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    animation: glass-shimmer 2s ease-in-out infinite;
+  }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+
 
   body {
-    @apply bg-background text-foreground;
+  @apply bg-cs-bg text-cs-on-bg;
   }
 }

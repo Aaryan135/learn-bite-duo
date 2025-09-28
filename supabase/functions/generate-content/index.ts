@@ -1,3 +1,4 @@
+// @ts-nocheck
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
@@ -66,7 +67,7 @@ serve(async (req) => {
     
     for (let i = 0; i < count; i++) {
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -108,28 +109,32 @@ serve(async (req) => {
           ? `https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=400&h=600&fit=crop&auto=format&q=80&sig=${Math.random()}`
           : null;
 
-        // Insert into content pool
+
+        // Log the insert payload for debugging
+        const insertPayload = {
+          subject: subject.toLowerCase(),
+          difficulty_level: difficulty,
+          content_type: contentType,
+          title: parsedContent.title,
+          content: parsedContent.content || parsedContent.script,
+          code_examples: { 
+            example: parsedContent.codeExample,
+            language: getLanguageFromSubject(subject)
+          },
+          estimated_duration: parsedContent.estimatedDuration || parsedContent.estimatedReadTime,
+          tags: parsedContent.keyPoints || parsedContent.keyTakeaways || parsedContent.tags || [subject, difficulty],
+          thumbnail_url: thumbnailUrl
+        };
+        console.log('Insert payload:', JSON.stringify(insertPayload));
+
         const { data: insertedContent, error: insertError } = await supabase
           .from('ai_content_pool')
-          .insert({
-            subject: subject.toLowerCase(),
-            difficulty_level: difficulty,
-            content_type: contentType,
-            title: parsedContent.title,
-            content: parsedContent.content || parsedContent.script,
-            code_examples: { 
-              example: parsedContent.codeExample,
-              language: getLanguageFromSubject(subject)
-            },
-            estimated_duration: parsedContent.estimatedDuration || parsedContent.estimatedReadTime,
-            tags: parsedContent.keyPoints || parsedContent.keyTakeaways || parsedContent.tags || [subject, difficulty],
-            thumbnail_url: thumbnailUrl
-          })
+          .insert(insertPayload)
           .select()
           .single();
 
         if (insertError) {
-          console.error(`Database insert error for item ${i + 1}:`, insertError);
+          console.error(`Database insert error for item ${i + 1}:`, JSON.stringify(insertError));
           continue;
         }
 

@@ -1,0 +1,64 @@
+/*
+  CodeSnap Color Tokens — Material 3 Role-based System
+  ---------------------------------------------------
+  Each variable maps to a Material 3 color role. Use these for backgrounds, text, surfaces, outlines, and states.
+  Always use the "on-*" color for text/icons atop its paired surface. Validate contrast for AA accessibility, especially over media.
+*/
+:root {
+  --cs-primary: #00B7B0;
+  --cs-on-primary: #FFFFFF;
+  --cs-primary-container: #B8F3EF;
+  --cs-on-primary-container: #003735;
+
+  --cs-secondary: #6366F1;
+  --cs-on-secondary: #FFFFFF;
+  --cs-secondary-container: #E0E7FF;
+  --cs-on-secondary-container: #1E293B;
+
+  --cs-tertiary: #22C55E;
+  --cs-on-tertiary: #0B1F14;
+
+  --cs-bg: #FFFFFF;
+  --cs-on-bg: #0B1220;
+  --cs-surface: #FFFFFF;
+  --cs-on-surface: #0F172A;
+  --cs-surface-variant: #EEF2F6;
+  --cs-on-surface-variant: #334155;
+
+  --cs-outline: #C7D0DA;
+  --cs-success: #10B981;
+  --cs-warning: #F59E0B;
+  --cs-error: #EF4444;
+}
+[data-theme="dark"] {
+  --cs-primary: #00C7BF;
+  --cs-on-primary: #002624;
+  --cs-primary-container: #00524E;
+  --cs-on-primary-container: #B8F3EF;
+
+  --cs-secondary: #8B8DFF;
+  --cs-on-secondary: #161A31;
+  --cs-secondary-container: #2C3170;
+  --cs-on-secondary-container: #E0E7FF;
+
+  --cs-tertiary: #34D399;
+  --cs-on-tertiary: #07281A;
+
+  --cs-bg: #0A0D12;
+  --cs-on-bg: #E6EAF0;
+  --cs-surface: #0B0F14;
+  --cs-on-surface: #E6EAF0;
+  --cs-surface-variant: #121826;
+  --cs-on-surface-variant: #A8B0BB;
+
+  --cs-outline: #2A3441;
+  --cs-success: #22C55E;
+  --cs-warning: #FBBF24;
+  --cs-error: #F87171;
+}
+
+/* Focus ring utility for accessibility */
+.cs-focus {
+  outline: 2px solid var(--cs-outline);
+  outline-offset: 2px;
+}
