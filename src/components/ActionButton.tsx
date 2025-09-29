@@ -8,7 +8,15 @@ interface ActionButtonProps {
   isActive?: boolean;
 }
 
+
+/**
+ * ActionButton is a stylized button for actions like like, bookmark, or share.
+ * It supports an icon, optional count, and active state styling.
+ */
 const ActionButton = ({ icon: Icon, count, onClick, isActive }: ActionButtonProps) => {
+  /**
+   * Format a number for display (e.g., 1.2K, 3.4M).
+   */
   const formatCount = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -21,6 +29,8 @@ const ActionButton = ({ icon: Icon, count, onClick, isActive }: ActionButtonProp
       className="flex flex-col items-center gap-1 p-2"
       whileTap={{ scale: 0.9 }}
       whileHover={{ scale: 1.1 }}
+      aria-label="Action button"
+      tabIndex={0}
     >
       <div className={`w-12 h-12 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors ${
         isActive ? 'bg-primary/30 text-primary' : 'bg-white/20 text-white'

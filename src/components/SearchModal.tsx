@@ -23,6 +23,10 @@ interface SearchResult {
   estimated_duration: number;
 }
 
+/**
+ * SearchModal provides a modal interface for searching and generating coding content.
+ * Users can search for topics, filter by subject/difficulty, and generate new content.
+ */
 export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -32,7 +36,7 @@ export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalPro
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [showNoResults, setShowNoResults] = useState(false);
   const [recentlyGenerated, setRecentlyGenerated] = useState<SearchResult[]>([]);
-  const { currentSubject, currentDifficulty } = useContentStore();
+  // Removed: const { currentSubject, currentDifficulty } = useContentStore();
 
   // Mock search data for when database is not available
   const mockSearchData: SearchResult[] = [
@@ -108,13 +112,17 @@ export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalPro
     }
   ];
 
+  /**
+   * Generate content for a custom query, using both mock and database-backed generation.
+   * Updates search results and recently generated list.
+   */
   const generateContentForQuery = async (query: string) => {
     setIsGenerating(true);
     setShowNoResults(false);
 
     try {
-      const subject = selectedSubject === 'all' ? currentSubject : selectedSubject;
-      const difficulty = selectedDifficulty === 'all' ? currentDifficulty : selectedDifficulty;
+  const subject = selectedSubject === 'all' ? 'python' : selectedSubject;
+  const difficulty = selectedDifficulty === 'all' ? 'beginner' : selectedDifficulty;
 
       // Create both video and text content for the custom topic
       const videoContent = createMockContentForQuery(query, subject, difficulty, 'video_script');
@@ -134,11 +142,13 @@ export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalPro
 
         if (error) {
           console.warn('Database generation failed, using mock content:', error);
+          toast.error('Could not generate content from database. Using mock content.');
         } else {
           console.log('Content generated and saved to database');
         }
       } catch (dbError) {
-        console.warn('Database not available, using mock content:', dbError);
+  console.warn('Database not available, using mock content:', dbError);
+  toast.error('Database not available. Using mock content.');
       }
 
       // Always show the generated content immediately in the search results
@@ -154,10 +164,11 @@ export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalPro
       toast.success(`Generated custom content for "${query}"`);
 
     } catch (error) {
-      console.error('Generation error:', error);
+  console.error('Generation error:', error);
+  toast.error('An error occurred while generating content.');
       // Fallback to mock content
-      const subject = selectedSubject === 'all' ? currentSubject : selectedSubject;
-      const difficulty = selectedDifficulty === 'all' ? currentDifficulty : selectedDifficulty;
+  const subject = selectedSubject === 'all' ? 'python' : selectedSubject;
+  const difficulty = selectedDifficulty === 'all' ? 'beginner' : selectedDifficulty;
       const mockGeneratedContent = createMockContentForQuery(query, subject, difficulty);
       setSearchResults([mockGeneratedContent]);
       toast.success(`Generated content for "${query}"`);
@@ -166,14 +177,21 @@ export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalPro
     }
   };
 
+  /**
+   * Create a mock SearchResult object for a given query, subject, and difficulty.
+   * Used as a fallback when database generation is unavailable.
+   */
   const createMockContentForQuery = (query: string, subject: string, difficulty: string, contentType?: string): SearchResult => {
+    // Fallbacks to prevent undefined errors
+    const safeSubject = typeof subject === 'string' && subject.length > 0 ? subject : 'General';
+    const safeDifficulty = typeof difficulty === 'string' && difficulty.length > 0 ? difficulty : 'beginner';
     const contentTypes = ['video_script', 'text_snippet'] as const;
     const selectedContentType = contentType || contentTypes[Math.floor(Math.random() * contentTypes.length)];
 
     const isVideo = selectedContentType === 'video_script';
     const titlePrefix = isVideo ?
-      `${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} ${subject.toUpperCase()}: Deep Dive into ${query}` :
-      `Complete Guide to ${query} in ${subject.toUpperCase()}`;
+      `${safeDifficulty.charAt(0).toUpperCase() + safeDifficulty.slice(1)} ${safeSubject.toUpperCase()}: Deep Dive into ${query}` :
+      `Complete Guide to ${query} in ${safeSubject.toUpperCase()}`;
 
     // Generate more comprehensive and in-depth content based on difficulty level
     const getInDepthContent = () => {
@@ -265,7 +283,8 @@ export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalPro
       const { data, error } = await searchQuery.limit(20);
 
       if (error) {
-        console.warn('Database search failed, using mock data:', error);
+  console.warn('Database search failed, using mock data:', error);
+  toast.error('Could not search database. Showing mock data.');
         // Use mock data as fallback
         const filteredMockData = mockSearchData.filter(item => {
           const matchesQuery =
@@ -286,7 +305,8 @@ export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalPro
         setShowNoResults((data || []).length === 0);
       }
     } catch (error) {
-      console.error('Search error:', error);
+  console.error('Search error:', error);
+  toast.error('An error occurred while searching.');
       // Fallback to mock data
       const filteredMockData = mockSearchData.filter(item => {
         const matchesQuery =
@@ -321,10 +341,10 @@ export function SearchModal({ isOpen, onClose, onContentSelect }: SearchModalPro
     if (isOpen) {
       setSearchQuery('');
       setSearchResults([]);
-      setSelectedSubject(currentSubject);
-      setSelectedDifficulty(currentDifficulty);
+      setSelectedSubject('python'); // fallback default
+      setSelectedDifficulty('beginner'); // fallback default
     }
-  }, [isOpen, currentSubject, currentDifficulty]);
+  }, [isOpen]);
 
   const handleContentClick = (content: SearchResult) => {
     onContentSelect(content);

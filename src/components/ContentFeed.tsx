@@ -5,6 +5,10 @@ import { ContentCard } from './ContentCard';
 import { DebugPanel } from './DebugPanel';
 import { Button } from '@/components/ui/button';
 
+/**
+ * ContentFeed displays the vertical feed of content cards, handles loading, infinite scroll,
+ * and triggers content generation when needed. It manages user authentication and loading states.
+ */
 export function ContentFeed() {
   const { triggerContentGeneration } = useContentStore();
   const {
@@ -36,17 +40,27 @@ export function ContentFeed() {
     }
   }, [currentIndex]);
 
-  // Auto-generate new content if only 5 reels are left
+  // Auto-generate new content for all subjects if only 10 items remain, then reload content
   useEffect(() => {
-    if (
-      content.length > 0 &&
-      currentIndex >= content.length - 5 &&
-      typeof triggerContentGeneration === 'function' &&
-      selectedSubject && selectedSubject !== 'all'
-    ) {
-      triggerContentGeneration();
+    if (content.length > 0 && content.length <= 10) {
+      (async () => {
+        if (typeof triggerBackgroundGeneration === 'function') {
+          await triggerBackgroundGeneration();
+          // Poll for new content up to 10 times (10 seconds)
+          let attempts = 0;
+          let initialLength = content.length;
+          while (attempts < 10) {
+            await new Promise(res => setTimeout(res, 1000));
+            await loadInitialContent();
+            if (content.length > initialLength) {
+              break;
+            }
+            attempts++;
+          }
+        }
+      })();
     }
-  }, [currentIndex, content.length, selectedSubject]);
+  }, [content.length, triggerBackgroundGeneration, loadInitialContent]);
 
   const handleNext = () => {
     if (currentIndex < content.length - 1) {
@@ -123,7 +137,7 @@ export function ContentFeed() {
   }
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-black flex flex-col overflow-hidden">
+    <div className="w-full h-full flex flex-col overflow-hidden">
       <div className="flex-1 w-full h-full overflow-y-auto snap-y snap-mandatory scrollbar-hide">
         {content.map((item, index) => (
           <div

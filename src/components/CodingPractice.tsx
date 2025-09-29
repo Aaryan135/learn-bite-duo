@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { toast } from 'sonner';
 import MonacoEditor from '@monaco-editor/react';
 import axios from 'axios';
 
@@ -12,6 +13,10 @@ const LANGUAGE_OPTIONS = [
   { label: 'Python', value: 'python' },
 ];
 
+/**
+ * CodingPractice component provides an interactive code editor and runner for JavaScript and Python.
+ * Users can select a language, write code, run it, and see the output instantly.
+ */
 export default function CodingPractice() {
   const [language, setLanguage] = useState('javascript');
   const [code, setCode] = useState(STARTER_SNIPPETS['javascript']);
@@ -19,6 +24,9 @@ export default function CodingPractice() {
   const [loading, setLoading] = useState(false);
   const editorRef = useRef(null);
 
+  /**
+   * Handle language selection change. Resets code and output for the new language.
+   */
   const handleLanguageChange = (e) => {
     const lang = e.target.value;
     setLanguage(lang);
@@ -26,6 +34,10 @@ export default function CodingPractice() {
     setOutput('');
   };
 
+  /**
+   * Run the code in the selected language by sending it to the backend API.
+   * Shows output or error in the output area and as a toast.
+   */
   const handleRun = async () => {
     setLoading(true);
     setOutput('');
@@ -36,11 +48,16 @@ export default function CodingPractice() {
       });
       setOutput(res.data.output || res.data.error || 'No output');
     } catch (err) {
-      setOutput(err.response?.data?.error || 'Error executing code');
+      const errorMsg = err.response?.data?.error || 'Error executing code';
+      setOutput(errorMsg);
+      toast.error(errorMsg);
     }
     setLoading(false);
   };
 
+  /**
+   * Reset the code editor to the starter snippet for the current language.
+   */
   const handleReset = () => {
     setCode(STARTER_SNIPPETS[language]);
     setOutput('');
@@ -63,15 +80,37 @@ export default function CodingPractice() {
                 `
               }
               aria-pressed={language === opt.value}
+              aria-label={`Select ${opt.label} language`}
+              tabIndex={0}
             >
               {opt.label}
             </button>
           ))}
         </div>
-        <button onClick={handleRun} disabled={loading} style={{ marginLeft: 8 }}>
-          {loading ? 'Running...' : 'Run'}
+        <button onClick={handleRun} disabled={loading} style={{ marginLeft: 8 }} aria-label="Run code" tabIndex={0}>
+          {loading ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <svg width="18" height="18" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg" stroke="#fff" style={{ marginRight: 4 }}>
+                <g fill="none" fillRule="evenodd">
+                  <g transform="translate(1 1)" strokeWidth="2">
+                    <circle strokeOpacity=".3" cx="18" cy="18" r="18" />
+                    <path d="M36 18c0-9.94-8.06-18-18-18">
+                      <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        from="0 18 18"
+                        to="360 18 18"
+                        dur="1s"
+                        repeatCount="indefinite" />
+                    </path>
+                  </g>
+                </g>
+              </svg>
+              Running...
+            </span>
+          ) : 'Run'}
         </button>
-        <button onClick={handleReset} disabled={loading} style={{ marginLeft: 8 }}>
+        <button onClick={handleReset} disabled={loading} style={{ marginLeft: 8 }} aria-label="Reset code" tabIndex={0}>
           Reset
         </button>
       </div>

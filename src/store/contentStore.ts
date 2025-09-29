@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface ContentItem {
   id: string;
@@ -70,6 +71,9 @@ export const useContentStore = create<ContentState>((set, get) => ({
   selectedDifficulty: 'all',
   mode: 'video_script',
   userConsumption: [],
+  /**
+   * Load more content for the current subject/difficulty/mode and append to the feed.
+   */
   loadMoreContent: async () => {
     const { selectedSubject, selectedDifficulty, mode, content } = get();
     set({ loadingMore: true });
@@ -92,6 +96,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
       const { data, error } = await query;
       if (error) {
         console.error('Error loading more content:', error);
+        toast.error('Error loading more content. Please try again.');
         return;
       }
       if (data && data.length > 0) {
@@ -105,6 +110,9 @@ export const useContentStore = create<ContentState>((set, get) => ({
   },
 
 
+  /**
+   * Generate content in the background for all subjects (used for prefetching).
+   */
   triggerBackgroundGeneration: async () => {
     // Generate content for all subjects (hardcoded list for now)
     const subjects = ['javascript', 'react', 'python', 'typescript'];
@@ -122,12 +130,16 @@ export const useContentStore = create<ContentState>((set, get) => ({
       });
       if (error) {
         console.error(`Error generating content for subject ${subject}:`, error);
+        toast.error(`Error generating content for ${subject}. Please try again.`);
       } else {
         console.log(`Content generation result for ${subject}:`, data);
       }
     }
   },
 
+  /**
+   * Generate content for the currently selected subject/difficulty/mode.
+   */
   triggerContentGeneration: async () => {
     // Generate content for the selected subject
     const { selectedSubject, selectedDifficulty, mode } = get();
@@ -143,11 +155,15 @@ export const useContentStore = create<ContentState>((set, get) => ({
     });
     if (error) {
       console.error(`Error generating content for subject ${selectedSubject}:`, error);
+      toast.error(`Error generating content for ${selectedSubject}. Please try again.`);
     } else {
       console.log(`Content generation result for ${selectedSubject}:`, data);
     }
   },
 
+  /**
+   * Get all content items that the user has bookmarked.
+   */
   getSavedContent: () => {
     const { content, userConsumption } = get();
     // Find all content items where userConsumption has bookmarked true
@@ -155,13 +171,38 @@ export const useContentStore = create<ContentState>((set, get) => ({
     return content.filter(item => bookmarkedIds.includes(item.id));
   },
 
-  setContent: (content) => set({ content }),
+  /**
+   * Set the content array, deduplicating by id.
+   */
+  setContent: (content) => {
+    // Deduplicate by id
+    const unique = Array.from(new Map(content.map(item => [item.id, item])).values());
+    set({ content: unique });
+  },
+  /**
+   * Set the current index in the feed.
+   */
   setCurrentIndex: (currentIndex) => set({ currentIndex }),
+  /**
+   * Set the loading state for content operations.
+   */
   setLoading: (loading) => set({ loading }),
+  /**
+   * Set the currently selected subject for filtering content.
+   */
   setSelectedSubject: (selectedSubject) => set({ selectedSubject }),
+  /**
+   * Set the currently selected difficulty for filtering content.
+   */
   setSelectedDifficulty: (selectedDifficulty) => set({ selectedDifficulty }),
+  /**
+   * Set the current content mode (video_script or text_snippet).
+   */
   setMode: (mode) => set({ mode }),
 
+  /**
+   * Load content for the current subject/difficulty/mode. Triggers generation if not enough content.
+   */
   loadContent: async () => {
     const { selectedSubject, selectedDifficulty, mode, triggerContentGeneration } = get();
     set({ loading: true });
@@ -184,6 +225,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
       const { data, error } = await query;
       if (error) {
         console.error('Error loading content:', error);
+        toast.error('Error loading content. Please try again.');
         return;
       }
       set({ content: data as ContentItem[] || [], currentIndex: 0 });
@@ -213,6 +255,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
             const { data: pollData, error: pollError } = await pollQuery;
             if (pollError) {
               console.error('Error polling for new content:', pollError);
+              toast.error('Error polling for new content. Please try again.');
               break;
             }
             if (pollData && pollData.length > (lastPollData?.length || 0)) {
@@ -231,11 +274,17 @@ export const useContentStore = create<ContentState>((set, get) => ({
     }
   },
 
-    loadInitialContent: async () => {
+  /**
+   * Alias for loadContent for compatibility.
+   */
+  loadInitialContent: async () => {
       // Alias for loadContent for compatibility
       return get().loadContent();
   },
 
+  /**
+   * Mark a content item as consumed by the user, updating or inserting the record.
+   */
   markContentConsumed: async (contentId: string, completionPercentage: number) => {
     const { selectedSubject, selectedDifficulty } = get();
     
@@ -252,6 +301,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
         .maybeSingle();
       if (selectError) {
         console.error('Error selecting user_content_consumption:', selectError);
+        toast.error('Error loading user progress. Please try again.');
       }
 
       if (existing) {
@@ -265,6 +315,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
           .eq('id', existing.id);
         if (updateError) {
           console.error('Error updating user_content_consumption:', updateError);
+          toast.error('Error saving your progress. Please try again.');
         }
       } else {
         // Insert new consumption record
@@ -279,6 +330,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
           });
         if (insertError) {
           console.error('Error inserting user_content_consumption:', insertError);
+          toast.error('Error saving your progress. Please try again.');
         }
       }
 
@@ -286,12 +338,16 @@ export const useContentStore = create<ContentState>((set, get) => ({
       const { error: rpcError } = await (supabase as any).rpc('increment_content_usage', { content_id: contentId });
       if (rpcError) {
         console.error('Error calling increment_content_usage RPC:', rpcError);
+        toast.error('Error updating content usage. Please try again.');
       }
     } catch (error) {
       console.error('Error marking content consumed:', error);
     }
   },
 
+  /**
+   * Update user interaction (like, bookmark, share) for a content item.
+   */
   updateContentInteraction: async (contentId: string, type: 'liked' | 'bookmarked' | 'shared', value: boolean) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -305,6 +361,7 @@ export const useContentStore = create<ContentState>((set, get) => ({
         .maybeSingle();
       if (selectError) {
         console.error('Error selecting user_content_consumption:', selectError);
+        toast.error('Error loading your interaction. Please try again.');
       }
 
       if (existing) {
@@ -314,13 +371,18 @@ export const useContentStore = create<ContentState>((set, get) => ({
           .eq('id', existing.id);
         if (updateError) {
           console.error('Error updating user_content_consumption:', updateError);
+          toast.error('Error saving your interaction. Please try again.');
         }
       }
     } catch (error) {
       console.error('Error updating content interaction:', error);
+      toast.error('Error updating content interaction. Please try again.');
     }
   },
 
+  /**
+   * Check if content generation is needed and trigger it if required.
+   */
   checkAndTriggerGeneration: async () => {
     const { selectedSubject, selectedDifficulty, currentIndex } = get();
     
@@ -341,11 +403,13 @@ export const useContentStore = create<ContentState>((set, get) => ({
 
         if (error) {
           console.error('Error checking content levels:', error);
+          toast.error('Error checking content levels. Please try again.');
         } else {
           console.log('Content level check completed:', data);
         }
       } catch (error) {
         console.error('Error in checkAndTriggerGeneration:', error);
+        toast.error('Error checking content levels. Please try again.');
       }
     }
   }

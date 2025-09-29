@@ -10,7 +10,7 @@ import { ThemeToggle } from "./components/ThemeToggle";
 import LevelUpModal from "./components/LevelUpModal";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+// import AnalyticsPage from "./pages/AnalyticsPage";
 import BookmarksPage from "./pages/BookmarksPage";
 import SettingsPage from "./pages/SettingsPage";
 import { useContentStore } from "./store/contentStore";
@@ -64,14 +64,14 @@ const App = () => {
           <LevelUpModal />
           {activeTab === 'feed' && <FeedPage />}
           {activeTab === 'profile' && <ProfilePage />}
-          {activeTab === 'analytics' && <AnalyticsPage />}
+          {/* {activeTab === 'analytics' && <AnalyticsPage />} */}
           {activeTab === 'bookmarks' && <BookmarksPage />}
           {activeTab === 'settings' && <SettingsPage />}
           {activeTab === 'coding' && <CodingPracticePage />}
 
           <div className="fixed bottom-0 left-0 right-0 z-40 bg-black/90 backdrop-blur border-t border-white/10">
             <div className="flex items-center justify-around h-12">
-              {(['feed','profile','analytics','bookmarks','settings','coding'] as const).map(tab => (
+              {(['feed','profile','bookmarks','settings','coding'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}

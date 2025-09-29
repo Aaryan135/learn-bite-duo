@@ -16,6 +16,10 @@ interface ContentCardProps {
 }
 
 
+/**
+ * ContentCard displays a single piece of content in the feed, including code, video, or text.
+ * Handles play/pause, progress, and user interactions (like, bookmark, share).
+ */
 export function ContentCard({ content, isActive, onNext, onPrevious }: ContentCardProps) {
   const [progress, setProgress] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
@@ -30,11 +34,11 @@ export function ContentCard({ content, isActive, onNext, onPrevious }: ContentCa
   const isShared = userContent?.shared || false;
 
   useEffect(() => {
-    if (!isActive) {
+    if (isActive) {
+      setIsPlaying(true); // Always start playing when active
+    } else {
       setIsPlaying(false);
-      return;
     }
-    setIsPlaying(true);
   }, [isActive]);
 
   useEffect(() => {
@@ -98,7 +102,7 @@ export function ContentCard({ content, isActive, onNext, onPrevious }: ContentCa
   };
 
   return (
-    <div className="relative w-full h-full bg-gradient-to-b from-black/80 to-black/60 rounded-xl overflow-hidden shadow-lg select-none" onClick={handleTap}>
+  <div className="relative w-full h-full bg-gradient-to-b from-black/80 to-black/60 overflow-hidden select-none" onClick={handleTap}>
       {/* Play/Pause indicator */}
       {!isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/20">
@@ -107,7 +111,7 @@ export function ContentCard({ content, isActive, onNext, onPrevious }: ContentCa
       )}
 
       {/* Main Content Display */}
-      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center px-4 pt-8 pb-32">
+  <div className="relative z-10 w-full h-full flex flex-col items-center justify-center">
         {content.content_type === 'video_script' && (
           <VideoScriptDisplay content={content} isPlaying={isPlaying} />
         )}

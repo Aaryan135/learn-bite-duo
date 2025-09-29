@@ -9,6 +9,10 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 
+/**
+ * FeedPage is the main page for displaying the vertical content feed.
+ * It provides subject and difficulty filters and renders the ContentFeed component.
+ */
 export default function FeedPage() {
   const { selectedSubject, setSelectedSubject, selectedDifficulty, setSelectedDifficulty } = useContentStore();
 
@@ -29,11 +33,8 @@ export default function FeedPage() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen pt-14 sm:pt-16">
-      {/* Vertical feed */}
-      <div className="flex-1 w-full max-w-3xl mx-auto flex flex-col">
-        <ContentFeed />
-      </div>
+    <div className="fixed inset-0 w-full h-full bg-black">
+      <ContentFeed />
     </div>
   );
 }
